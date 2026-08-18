@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0e1a;
+  --foreground: #f3e2b6;
+  --heading: #f1d592;
+  --card: #12181f;
+  --muted: #c4b896;
+  --border: rgba(212, 175, 55, 0.28);
+  --accent: #d4af37;
+  --accent-strong: #f1d592;
+  --on-accent: #0a0e1a;
+  --nav: rgba(10, 14, 26, 0.94);
+  --input: rgba(8, 11, 20, 0.82);
+  --positive: #22c55e;
+  --negative: #f43f5e;
+}
+
+html.theme-light {
+  --background: #ffffff;
+  --foreground: #0a0e1a;
+  --heading: #0a0e1a;
+  --card: #f7f4ea;
+  --muted: #4a5568;
+  --border: rgba(10, 14, 26, 0.12);
+  --accent: #c9a227;
+  --accent-strong: #d4af37;
+  --on-accent: #0a0e1a;
+  --nav: rgba(255, 255, 255, 0.94);
+  --input: #ffffff;
+  --positive: #15803d;
+  --negative: #be123c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-heading: var(--heading);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-accent);
+  --color-nav: var(--nav);
+  --color-input: var(--input);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-cinzel);
+  --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 16%, transparent), transparent 32%),
+    var(--background);
+}
+
+h1,
+h2,
+.font-display {
+  font-family: var(--font-cinzel), Georgia, serif;
+  color: var(--heading);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.safe-bottom {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.safe-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 4.5rem);
+}

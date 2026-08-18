@@ -1,0 +1,72 @@
+import { ChallengeStatus } from "@prisma/client";
+import { requireUser } from "@/lib/session";
+import { getCurrentParticipation } from "@/lib/queries";
+import { buildChallengeProgress } from "@/lib/challenge";
+import { prisma } from "@/lib/prisma";
+import { todayInNewYork, ymdToUtcDate } from "@/lib/dates";
+import { isTradingDay } from "@/lib/trading-calendar";
+import { DailyUpdateForm } from "@/components/update/daily-update-form";
+import { LockedState } from "@/components/challenge/waiting-screen";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/badge";
+
+export const dynamic = "force-dynamic";
+
+export default async function UpdatePage() {
+  const user = await requireUser();
+  const participation = await getCurrentParticipation(user.id);
+
+  if (!participation) {
+    return (
+      <Card className="p-5">
+        <h1 className="text-2xl font-semibold">Actualización diaria</h1>
+        <p className="mt-2 text-sm text-muted">Primero únete a un reto desde Ranking.</p>
+      </Card>
+    );
+  }
+
+  const { challenge } = participation;
+  const locked = challenge.status !== ChallengeStatus.ACTIVE;
+  const today = todayInNewYork();
+  const progress = buildChallengeProgress(challenge, today);
+  const marketClosed = challenge.status === ChallengeStatus.ACTIVE && !isTradingDay(today);
+
+  const existing = challenge.status === ChallengeStatus.ACTIVE
+    ? await prisma.dailyBalance.findUnique({
+        where: {
+          participantId_challengeId_tradingDate: {
+            participantId: participation.id,
+            challengeId: challenge.id,
+            tradingDate: ymdToUtcDate(today),
+          },
+        },
+      })
+    : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold">Actualización diaria</h1>
+          <p className="mt-1 text-sm text-muted">
+            Solo introduces el balance de cierre. La fecha la determina el sistema.
+          </p>
+        </div>
+        {challenge.status === ChallengeStatus.ACTIVE ? (
+          existing ? <StatusBadge tone="positive">Actualizado</StatusBadge> : (
+            !marketClosed ? <StatusBadge tone="warning">Pendiente</StatusBadge> : null
+          )
+        ) : null}
+      </div>
+      {locked ? <LockedState /> : (
+        <DailyUpdateForm
+          challengeId={challenge.id}
+          canSubmit={progress.canSubmitToday}
+          marketClosed={marketClosed}
+          alreadyUpdated={Boolean(existing)}
+          locked={false}
+        />
+      )}
+    </div>
+  );
+}
