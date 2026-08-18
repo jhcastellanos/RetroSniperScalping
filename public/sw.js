@@ -1,4 +1,4 @@
-const CACHE = "scalping-challenge-v2";
+const CACHE = "scalping-challenge-v3";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());

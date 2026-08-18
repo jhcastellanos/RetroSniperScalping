@@ -15,7 +15,7 @@ export default function ErrorPage({
         Recarga e inténtalo de nuevo. Si el problema continúa, cierra la app del teléfono y vuelve a abrirla.
       </p>
       <div className="mt-6">
-        <Button type="button" onClick={reset}>
+        <Button type="button" onClick={() => window.location.reload()}>
           Reintentar
         </Button>
       </div>
