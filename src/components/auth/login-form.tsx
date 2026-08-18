@@ -32,7 +32,7 @@ export function LoginForm() {
         return;
       }
 
-      window.location.assign("/");
+      window.location.replace(`${window.location.origin}/`);
     } catch {
       setError("No se pudo iniciar sesión. Recarga la página e inténtalo de nuevo.");
       setPending(false);

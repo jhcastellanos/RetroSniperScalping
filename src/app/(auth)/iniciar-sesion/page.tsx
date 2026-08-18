@@ -3,6 +3,8 @@ import { GoogleButton } from "@/components/auth/google-button";
 import { LoginForm } from "@/components/auth/login-form";
 import { isGoogleAuthConfigured } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 export default function LoginPage() {
   return (
     <AuthShell
