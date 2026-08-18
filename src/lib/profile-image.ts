@@ -15,6 +15,14 @@ export function resolveProfileImage(user: ImageSource | null | undefined): strin
   );
 }
 
+/** Keep JWTs small: never store data-URL photos in the session cookie. */
+export function sessionSafeImage(value?: string | null): string | null {
+  if (!value) return null;
+  if (value.startsWith("data:")) return null;
+  if (value.length > 500) return null;
+  return value;
+}
+
 export function displayName(user: { firstName?: string | null; lastName?: string | null; name?: string | null }) {
   const full = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
   if (full) return full;

@@ -7,7 +7,7 @@ import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 import { env, isGoogleAuthConfigured } from "@/lib/env";
 import { loginSchema } from "@/lib/validations";
-import { splitFullName } from "@/lib/profile-image";
+import { sessionSafeImage, splitFullName } from "@/lib/profile-image";
 
 const googleProvider = isGoogleAuthConfigured()
   ? [
@@ -46,11 +46,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: `${user.firstName} ${user.lastName}`.trim(),
-          image: user.profileImage ?? user.googleImage ?? user.image,
+          image: sessionSafeImage(user.profileImage ?? user.googleImage ?? user.image),
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
-          profileImage: user.profileImage,
+          profileImage: sessionSafeImage(user.profileImage),
         };
       },
     }),
@@ -63,7 +63,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = user.role ?? "USER";
         token.firstName = user.firstName;
         token.lastName = user.lastName;
-        token.profileImage = user.profileImage;
+        token.profileImage = sessionSafeImage(user.profileImage);
+        token.picture = sessionSafeImage(user.image);
       }
 
       if ((trigger === "signIn" || trigger === "signUp" || !token.role) && token.sub) {
@@ -83,9 +84,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.role = dbUser.role;
           token.firstName = dbUser.firstName;
           token.lastName = dbUser.lastName;
-          token.profileImage = dbUser.profileImage ?? dbUser.googleImage ?? dbUser.image;
+          token.profileImage = sessionSafeImage(
+            dbUser.profileImage ?? dbUser.googleImage ?? dbUser.image,
+          );
         }
       }
+
+      token.profileImage = sessionSafeImage(token.profileImage);
+      token.picture = sessionSafeImage(typeof token.picture === "string" ? token.picture : null);
 
       return token;
     },
@@ -95,7 +101,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role ?? "USER";
         session.user.firstName = token.firstName ?? "";
         session.user.lastName = token.lastName ?? "";
-        session.user.profileImage = token.profileImage ?? null;
+        session.user.profileImage = sessionSafeImage(token.profileImage);
+        session.user.image = sessionSafeImage(token.profileImage);
       }
       return session;
     },
