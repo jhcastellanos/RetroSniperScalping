@@ -25,7 +25,7 @@ export const ErrorMessages = {
   invalidBalance: "El balance debe ser mayor o igual a $0.",
   noParticipants: "Necesitas al menos un participante para iniciar el reto.",
   alreadyJoined: "Ya estás inscrito en este reto.",
-  cannotJoin: "Este reto no está disponible para inscripción.",
+  cannotJoin: "Este reto ya no acepta inscripciones.",
   dayNotOpen: "No hay un día abierto para cargar resultados.",
   dayAlreadyClosed: "Este día ya fue cerrado.",
   imageType: "Solo se permiten imágenes JPG, PNG o WEBP.",

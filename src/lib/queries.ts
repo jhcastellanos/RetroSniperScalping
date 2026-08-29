@@ -36,7 +36,7 @@ export async function getJoinableChallenges(userId: string) {
 
   return prisma.challenge.findMany({
     where: {
-      status: { in: [ChallengeStatus.REGISTRATION] },
+      status: { in: [ChallengeStatus.REGISTRATION, ChallengeStatus.ACTIVE] },
       ...(joinedIds.length ? { id: { notIn: joinedIds } } : {}),
     },
     orderBy: { createdAt: "desc" },

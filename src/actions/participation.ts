@@ -12,7 +12,10 @@ export async function joinChallenge(challengeId: string) {
     const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
     if (!challenge) throw new AppError("El reto no existe.", "NOT_FOUND");
 
-    if (challenge.status !== ChallengeStatus.REGISTRATION) {
+    if (
+      challenge.status !== ChallengeStatus.REGISTRATION &&
+      challenge.status !== ChallengeStatus.ACTIVE
+    ) {
       throw new AppError(ErrorMessages.cannotJoin, "CANNOT_JOIN");
     }
 

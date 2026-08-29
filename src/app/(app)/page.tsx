@@ -33,7 +33,7 @@ export default async function HomePage() {
         <Card className="p-5">
           <h1 className="text-2xl font-semibold">Aún no hay un reto abierto</h1>
           <p className="mt-2 text-sm text-muted">
-            Cuando el administrador abra la inscripción, podrás unirte desde aquí.
+            Cuando el administrador tenga un reto en inscripción o en curso, podrás unirte desde aquí.
           </p>
         </Card>
       );

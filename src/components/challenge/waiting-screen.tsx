@@ -55,13 +55,18 @@ export function JoinableChallengeCard({
     startingBalance: { toString(): string };
     targetBalance: { toString(): string };
     totalTradingDays: number;
+    status: ChallengeStatus;
   };
   participantCount: number;
 }) {
+  const alreadyStarted = challenge.status === ChallengeStatus.ACTIVE;
+
   return (
     <Card className="space-y-4 p-5">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Reto abierto</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          {alreadyStarted ? "Reto en curso" : "Reto abierto"}
+        </p>
         <h2 className="mt-1 text-2xl font-semibold">{challenge.name}</h2>
       </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
@@ -71,7 +76,9 @@ export function JoinableChallengeCard({
         <Stat label="Inscritos" value={String(participantCount)} />
       </div>
       <p className="text-sm text-muted">
-        Puedes inscribirte ahora. El administrador iniciará el reto cuando todos estén listos.
+        {alreadyStarted
+          ? "El reto ya comenzó y aún puedes inscribirte. Entras en el día actual y puedes cargar tu resultado desde hoy."
+          : "Puedes inscribirte ahora. El administrador iniciará el reto cuando esté listo."}
       </p>
       <JoinChallengeButton challengeId={challenge.id} />
     </Card>

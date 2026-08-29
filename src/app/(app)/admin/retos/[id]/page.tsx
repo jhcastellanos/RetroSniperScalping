@@ -70,7 +70,7 @@ export default async function ChallengeAdminPage({
         />
         {challenge.status === ChallengeStatus.REGISTRATION ? (
           <p className="col-span-2 text-sm text-muted">
-            La inscripción está abierta. El reto no comienza solo, aunque la fecha estimada ya haya pasado. Tú lo inicias con el botón de abajo.
+            La inscripción sigue abierta aunque el reto ya haya comenzado. Las personas pueden crear cuenta y unirse en cualquier momento.
           </p>
         ) : null}
         {challenge.status === ChallengeStatus.ACTIVE ? (
@@ -84,7 +84,7 @@ export default async function ChallengeAdminPage({
             <Stat label="Completaron" value={String(completedCount)} />
             <Stat label="Balance promedio" value={formatMoney(average)} />
             <p className="col-span-2 text-sm text-muted">
-              El día solo cambia cuando tú lo cierras. Un sábado o feriado no cierra el día.
+              El día solo cambia cuando tú lo cierras. Un sábado o feriado no cierra el día. Las personas pueden seguir inscribiéndose aunque el reto ya esté en curso.
             </p>
           </>
         ) : null}
