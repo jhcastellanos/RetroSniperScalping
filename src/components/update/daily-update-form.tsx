@@ -12,15 +12,15 @@ const initial: SaveBalanceResult = {};
 export function DailyUpdateForm({
   challengeId,
   canSubmit,
-  marketClosed,
   alreadyUpdated,
   locked,
+  dayNumber,
 }: {
   challengeId: string;
   canSubmit: boolean;
-  marketClosed: boolean;
   alreadyUpdated: boolean;
   locked: boolean;
+  dayNumber: number;
 }) {
   const [state, action, pending] = useActionState(saveDailyBalance, initial);
 
@@ -31,15 +31,6 @@ export function DailyUpdateForm({
         <p className="mt-2 text-sm text-muted">
           El registro de balances se habilita el día en que el administrador inicie el reto.
         </p>
-      </Card>
-    );
-  }
-
-  if (marketClosed) {
-    return (
-      <Card className="p-5 text-center">
-        <p className="text-lg font-semibold">Mercado cerrado</p>
-        <p className="mt-2 text-sm text-muted">Hoy no es un día de trading.</p>
       </Card>
     );
   }
@@ -62,7 +53,7 @@ export function DailyUpdateForm({
           inputMode="decimal"
           step="0.01"
           min="0"
-          label="Balance de cierre de hoy"
+          label={`Balance de cierre · Día ${dayNumber}`}
           placeholder="127.32"
           required
         />

@@ -97,6 +97,8 @@ model Challenge {
   status           ChallengeStatus @default(DRAFT)
   plannedStartDate DateTime?       @db.Date
   actualStartDate  DateTime?       @db.Date
+  currentDayNumber Int             @default(0)
+  currentDayDate   DateTime?       @db.Date
   completedAt      DateTime?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
@@ -136,6 +138,7 @@ model DailyBalance {
   challengeId   String
   balance       Decimal  @db.Decimal(14, 2)
   tradingDate   DateTime @db.Date
+  dayNumber     Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

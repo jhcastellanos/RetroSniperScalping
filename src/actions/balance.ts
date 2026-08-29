@@ -7,13 +7,8 @@ import { requireUser } from "@/lib/session";
 import { dailyBalanceSchema } from "@/lib/validations";
 import { AppError, ErrorMessages, getErrorMessage } from "@/lib/errors";
 import { money } from "@/lib/money";
-import { dateToYmd, todayInNewYork, ymdToUtcDate } from "@/lib/dates";
+import { dateToYmd, ymdToUtcDate } from "@/lib/dates";
 import { dailyReturn, reachedTarget } from "@/lib/stats";
-import {
-  getEstimatedCompletionDate,
-  isTradingDay,
-  isWithinChallengeWindow,
-} from "@/lib/trading-calendar";
 import { getLeaderboard } from "@/lib/challenge";
 
 export type SaveBalanceResult = {
@@ -29,12 +24,8 @@ export type SaveBalanceResult = {
 
 async function maybeCompleteChallenge(challengeId: string) {
   const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
-  if (!challenge?.actualStartDate || challenge.status !== ChallengeStatus.ACTIVE) return;
-
-  const start = dateToYmd(challenge.actualStartDate);
-  const today = todayInNewYork();
-  const lastDay = getEstimatedCompletionDate(start, challenge.totalTradingDays);
-  if (today > lastDay) {
+  if (!challenge || challenge.status !== ChallengeStatus.ACTIVE) return;
+  if (challenge.currentDayNumber > challenge.totalTradingDays) {
     await prisma.challenge.updateMany({
       where: { id: challengeId, status: ChallengeStatus.ACTIVE },
       data: { status: ChallengeStatus.COMPLETED, completedAt: new Date() },
@@ -61,20 +52,15 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
     if (challenge.status !== ChallengeStatus.ACTIVE) {
       throw new AppError(ErrorMessages.challengeNotStarted, "NOT_STARTED");
     }
-    if (!challenge.actualStartDate) {
-      throw new AppError(ErrorMessages.challengeNotStarted, "NOT_STARTED");
+    if (!challenge.actualStartDate || !challenge.currentDayDate || challenge.currentDayNumber < 1) {
+      throw new AppError(ErrorMessages.dayNotOpen, "DAY_NOT_OPEN");
     }
-
-    const today = todayInNewYork();
-    if (!isTradingDay(today)) {
-      throw new AppError(ErrorMessages.marketClosed, "MARKET_CLOSED");
-    }
-
-    const start = dateToYmd(challenge.actualStartDate);
-    if (!isWithinChallengeWindow(start, today, challenge.totalTradingDays)) {
+    if (challenge.currentDayNumber > challenge.totalTradingDays) {
       await maybeCompleteChallenge(challenge.id);
       throw new AppError(ErrorMessages.challengeCompleted, "COMPLETED");
     }
+
+    const officialDate = dateToYmd(challenge.currentDayDate);
 
     const participant = await prisma.challengeParticipant.findUnique({
       where: {
@@ -89,7 +75,7 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
     }
 
     const previousRank = (await getLeaderboard(challenge.id, user.id)).find((row) => row.isYou)?.position ?? null;
-    const tradingDate = ymdToUtcDate(today);
+    const tradingDate = ymdToUtcDate(officialDate);
     const newBalance = money(parsed.data.balance);
 
     const previousEntry = await prisma.dailyBalance.findFirst({
@@ -116,9 +102,11 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
           challengeId: challenge.id,
           balance: newBalance,
           tradingDate,
+          dayNumber: challenge.currentDayNumber,
         },
         update: {
           balance: newBalance,
+          dayNumber: challenge.currentDayNumber,
         },
       });
 

@@ -8,6 +8,7 @@ import { dateToYmd, todayInNewYork } from "@/lib/dates";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { StartChallengeButton } from "@/components/admin/start-challenge-button";
+import { CloseDayButton } from "@/components/admin/close-day-button";
 import { OpenRegistrationButton } from "@/components/admin/open-registration-button";
 import { EditChallengeForm } from "@/components/admin/edit-challenge-form";
 import { DeleteChallengeButton } from "@/components/admin/delete-challenge-button";
@@ -76,8 +77,15 @@ export default async function ChallengeAdminPage({
           <>
             <Stat label="Día actual" value={String(progress.tradingDayNumber)} />
             <Stat label="Días restantes" value={String(progress.tradingDaysRemaining)} />
+            <Stat
+              label="Fecha oficial"
+              value={progress.officialDate ?? "—"}
+            />
             <Stat label="Completaron" value={String(completedCount)} />
             <Stat label="Balance promedio" value={formatMoney(average)} />
+            <p className="col-span-2 text-sm text-muted">
+              El día solo cambia cuando tú lo cierras. Un sábado o feriado no cierra el día.
+            </p>
           </>
         ) : null}
       </Card>
@@ -95,6 +103,17 @@ export default async function ChallengeAdminPage({
           totalTradingDays={challenge.totalTradingDays}
           today={todayInNewYork()}
           plannedStartDate={challenge.plannedStartDate ? dateToYmd(challenge.plannedStartDate) : null}
+        />
+      ) : null}
+
+      {challenge.status === ChallengeStatus.ACTIVE && progress.officialDate ? (
+        <CloseDayButton
+          challengeId={challenge.id}
+          currentDayNumber={progress.tradingDayNumber}
+          officialDate={progress.officialDate}
+          officialDateIsTradingDay={progress.officialDateIsTradingDay}
+          tradingDayEnded={progress.tradingDayEnded}
+          totalTradingDays={challenge.totalTradingDays}
         />
       ) : null}
 

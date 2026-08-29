@@ -26,6 +26,8 @@ export const ErrorMessages = {
   noParticipants: "Necesitas al menos un participante para iniciar el reto.",
   alreadyJoined: "Ya estás inscrito en este reto.",
   cannotJoin: "Este reto no está disponible para inscripción.",
+  dayNotOpen: "No hay un día abierto para cargar resultados.",
+  dayAlreadyClosed: "Este día ya fue cerrado.",
   imageType: "Solo se permiten imágenes JPG, PNG o WEBP.",
   imageSize: "La imagen no puede superar los 2 MB.",
   imageStorage: "El almacenamiento de fotos no está configurado en el servidor.",

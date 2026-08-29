@@ -6,10 +6,8 @@ import { classifyDay, dailyReturn, goalProgress, totalReturn } from "@/lib/stats
 import {
   getEstimatedCompletionDate,
   getTradingDayNumber,
-  getTradingDaysElapsed,
-  getTradingDaysRemaining,
   isTradingDay,
-  isWithinChallengeWindow,
+  nyseTradingDayHasEnded,
 } from "@/lib/trading-calendar";
 
 export function challengeStartYmd(challenge: { actualStartDate: Date | null }): Ymd | null {
@@ -136,7 +134,7 @@ export async function getParticipantHistory(participantId: string, challengeId: 
     const ymd = dateToYmd(entry.tradingDate);
     const ret = dailyReturn(entry.balance, previous);
     const point: DailyPoint = {
-      dayNumber: start ? getTradingDayNumber(start, ymd) : 0,
+      dayNumber: entry.dayNumber > 0 ? entry.dayNumber : start ? getTradingDayNumber(start, ymd) : 0,
       tradingDate: ymd,
       balance: entry.balance,
       dailyReturn: ret,
@@ -151,6 +149,8 @@ export function buildChallengeProgress(challenge: {
   status: ChallengeStatus;
   actualStartDate: Date | null;
   totalTradingDays: number;
+  currentDayNumber?: number;
+  currentDayDate?: Date | null;
 }, today = todayInNewYork()) {
   const start = challengeStartYmd(challenge);
   if (!start || challenge.status === ChallengeStatus.DRAFT || challenge.status === ChallengeStatus.REGISTRATION) {
@@ -160,18 +160,30 @@ export function buildChallengeProgress(challenge: {
       tradingDaysRemaining: challenge.totalTradingDays,
       estimatedCompletionDate: null as Ymd | null,
       canSubmitToday: false,
+      officialDate: null as Ymd | null,
+      officialDateIsTradingDay: false,
+      tradingDayEnded: false,
     };
   }
 
+  const officialDate = challenge.currentDayDate ? dateToYmd(challenge.currentDayDate) : start;
+  const tradingDayNumber = challenge.currentDayNumber && challenge.currentDayNumber > 0
+    ? challenge.currentDayNumber
+    : 1;
+  const remaining = Math.max(0, challenge.totalTradingDays - tradingDayNumber);
+
   return {
-    tradingDayNumber: getTradingDayNumber(start, today),
-    tradingDaysElapsed: getTradingDaysElapsed(start, today, challenge.totalTradingDays),
-    tradingDaysRemaining: getTradingDaysRemaining(start, today, challenge.totalTradingDays),
-    estimatedCompletionDate: getEstimatedCompletionDate(start, challenge.totalTradingDays),
+    tradingDayNumber,
+    tradingDaysElapsed: tradingDayNumber,
+    tradingDaysRemaining: remaining,
+    estimatedCompletionDate: getEstimatedCompletionDate(officialDate, remaining + 1),
     canSubmitToday:
       challenge.status === ChallengeStatus.ACTIVE &&
-      isTradingDay(today) &&
-      isWithinChallengeWindow(start, today, challenge.totalTradingDays),
+      tradingDayNumber >= 1 &&
+      tradingDayNumber <= challenge.totalTradingDays,
+    officialDate,
+    officialDateIsTradingDay: isTradingDay(officialDate),
+    tradingDayEnded: nyseTradingDayHasEnded(officialDate, today),
   };
 }
 

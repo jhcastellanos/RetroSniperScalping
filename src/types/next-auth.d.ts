@@ -30,5 +30,7 @@ declare module "next-auth/jwt" {
     firstName?: string;
     lastName?: string;
     profileImage?: string | null;
+    picture?: string | null;
+    image?: string | null;
   }
 }

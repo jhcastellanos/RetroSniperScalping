@@ -7,8 +7,8 @@ import { requireAdminAction } from "@/lib/session";
 import { challengeSchema } from "@/lib/validations";
 import { AppError, ErrorMessages, getErrorMessage } from "@/lib/errors";
 import { money } from "@/lib/money";
-import { todayInNewYork, ymdToUtcDate } from "@/lib/dates";
-import { isTradingDay } from "@/lib/trading-calendar";
+import { todayInNewYork, ymdToUtcDate, dateToYmd } from "@/lib/dates";
+import { nextOfficialChallengeDate } from "@/lib/trading-calendar";
 
 function revalidateChallenge(id?: string) {
   revalidatePath("/");
@@ -80,14 +80,11 @@ export async function startChallengeToday(challengeId: string) {
     await requireAdminAction();
     const today = todayInNewYork();
 
-    if (!isTradingDay(today)) {
-      throw new AppError(ErrorMessages.notTradingDayToStart, "NOT_TRADING_DAY");
-    }
-
     const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
     if (!challenge) throw new AppError("El reto no existe.", "NOT_FOUND");
 
-    // plannedStartDate is informational only. Admin can start before or after it.
+    // plannedStartDate is informational only. Admin can start any calendar day,
+    // including weekends. The day counter only moves when the admin closes a day.
     if (challenge.status === ChallengeStatus.ACTIVE || challenge.actualStartDate) {
       return {
         success: false,
@@ -119,6 +116,8 @@ export async function startChallengeToday(challengeId: string) {
       data: {
         status: ChallengeStatus.ACTIVE,
         actualStartDate: ymdToUtcDate(today),
+        currentDayNumber: 1,
+        currentDayDate: ymdToUtcDate(today),
       },
     });
 
@@ -132,6 +131,55 @@ export async function startChallengeToday(challengeId: string) {
 
     revalidateChallenge(challengeId);
     return { success: true, alreadyStarted: false };
+  } catch (error) {
+    return { error: getErrorMessage(error) };
+  }
+}
+
+export async function closeChallengeDay(challengeId: string) {
+  try {
+    await requireAdminAction();
+    const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
+    if (!challenge) throw new AppError("El reto no existe.", "NOT_FOUND");
+    if (challenge.status !== ChallengeStatus.ACTIVE) {
+      throw new AppError(ErrorMessages.challengeNotActive, "INVALID_STATUS");
+    }
+    if (!challenge.currentDayDate || challenge.currentDayNumber < 1) {
+      throw new AppError(ErrorMessages.dayNotOpen, "DAY_NOT_OPEN");
+    }
+
+    if (challenge.currentDayNumber >= challenge.totalTradingDays) {
+      await prisma.challenge.update({
+        where: { id: challengeId },
+        data: {
+          status: ChallengeStatus.COMPLETED,
+          completedAt: new Date(),
+        },
+      });
+      revalidateChallenge(challengeId);
+      return { success: true, completed: true, closedDay: challenge.currentDayNumber };
+    }
+
+    const closedDate = dateToYmd(challenge.currentDayDate);
+    const nextDate = nextOfficialChallengeDate(closedDate);
+    const nextNumber = challenge.currentDayNumber + 1;
+
+    await prisma.challenge.update({
+      where: { id: challengeId },
+      data: {
+        currentDayNumber: nextNumber,
+        currentDayDate: ymdToUtcDate(nextDate),
+      },
+    });
+
+    revalidateChallenge(challengeId);
+    return {
+      success: true,
+      completed: false,
+      closedDay: challenge.currentDayNumber,
+      nextDay: nextNumber,
+      nextDate,
+    };
   } catch (error) {
     return { error: getErrorMessage(error) };
   }

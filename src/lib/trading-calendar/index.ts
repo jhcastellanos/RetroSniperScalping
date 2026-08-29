@@ -85,3 +85,11 @@ export function isWithinChallengeWindow(actualStartDate: Ymd, today: Ymd, totalT
   const lastDay = getEstimatedCompletionDate(actualStartDate, totalTradingDays);
   return compareYmd(today, lastDay) <= 0;
 }
+
+export function nyseTradingDayHasEnded(officialDate: Ymd, today: Ymd): boolean {
+  return compareYmd(today, officialDate) > 0 && isTradingDay(officialDate);
+}
+
+export function nextOfficialChallengeDate(closedDate: Ymd): Ymd {
+  return nextTradingDay(closedDate);
+}

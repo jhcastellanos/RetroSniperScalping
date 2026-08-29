@@ -3,8 +3,7 @@ import { requireUser } from "@/lib/session";
 import { getCurrentParticipation } from "@/lib/queries";
 import { buildChallengeProgress } from "@/lib/challenge";
 import { prisma } from "@/lib/prisma";
-import { todayInNewYork, ymdToUtcDate } from "@/lib/dates";
-import { isTradingDay } from "@/lib/trading-calendar";
+import { formatLongDate, ymdToUtcDate } from "@/lib/dates";
 import { DailyUpdateForm } from "@/components/update/daily-update-form";
 import { LockedState } from "@/components/challenge/waiting-screen";
 import { Card } from "@/components/ui/card";
@@ -27,17 +26,16 @@ export default async function UpdatePage() {
 
   const { challenge } = participation;
   const locked = challenge.status !== ChallengeStatus.ACTIVE;
-  const today = todayInNewYork();
-  const progress = buildChallengeProgress(challenge, today);
-  const marketClosed = challenge.status === ChallengeStatus.ACTIVE && !isTradingDay(today);
+  const progress = buildChallengeProgress(challenge);
+  const officialDate = progress.officialDate;
 
-  const existing = challenge.status === ChallengeStatus.ACTIVE
+  const existing = challenge.status === ChallengeStatus.ACTIVE && officialDate
     ? await prisma.dailyBalance.findUnique({
         where: {
           participantId_challengeId_tradingDate: {
             participantId: participation.id,
             challengeId: challenge.id,
-            tradingDate: ymdToUtcDate(today),
+            tradingDate: ymdToUtcDate(officialDate),
           },
         },
       })
@@ -49,12 +47,13 @@ export default async function UpdatePage() {
         <div>
           <h1 className="text-3xl font-semibold">Actualización diaria</h1>
           <p className="mt-1 text-sm text-muted">
-            Solo introduces el balance de cierre. La fecha la determina el sistema.
+            Introduce el balance de cierre del día {progress.tradingDayNumber}
+            {officialDate ? ` (${formatLongDate(officialDate)})` : ""}. La fecha oficial la controla el administrador.
           </p>
         </div>
         {challenge.status === ChallengeStatus.ACTIVE ? (
           existing ? <StatusBadge tone="positive">Actualizado</StatusBadge> : (
-            !marketClosed ? <StatusBadge tone="warning">Pendiente</StatusBadge> : null
+            progress.canSubmitToday ? <StatusBadge tone="warning">Pendiente</StatusBadge> : null
           )
         ) : null}
       </div>
@@ -62,9 +61,9 @@ export default async function UpdatePage() {
         <DailyUpdateForm
           challengeId={challenge.id}
           canSubmit={progress.canSubmitToday}
-          marketClosed={marketClosed}
           alreadyUpdated={Boolean(existing)}
           locked={false}
+          dayNumber={progress.tradingDayNumber}
         />
       )}
     </div>

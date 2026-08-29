@@ -45,7 +45,10 @@ export function StartChallengeButton({
               Fecha estimada: {formatLongDate(plannedStartDate)}. Es solo una referencia y no impide iniciar ahora.
             </p>
           ) : null}
-          <p className="font-semibold text-white">Hoy se convertirá en el Trading Day 1.</p>
+          <p className="font-semibold text-heading">Hoy se convertirá en el día 1.</p>
+          <p>
+            El contador no avanza solo. Aunque inicies un sábado o feriado, el día 1 permanece abierto hasta que tú lo cierres. En un día hábil de NYSE también puedes cerrarlo después de la medianoche de Nueva York.
+          </p>
           {error ? <p className="text-negative">{error}</p> : null}
           <div className="grid grid-cols-2 gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
