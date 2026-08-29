@@ -48,7 +48,7 @@ export default async function UpdatePage() {
           <h1 className="text-3xl font-semibold">Actualización diaria</h1>
           <p className="mt-1 text-sm text-muted">
             Introduce el balance de cierre del día {progress.tradingDayNumber}
-            {officialDate ? ` (${formatLongDate(officialDate)})` : ""}. La fecha oficial la controla el administrador.
+            {officialDate ? ` (${formatLongDate(officialDate)})` : ""}. Solo hay un resultado por día: si ya lo guardaste, al enviarlo otra vez se actualiza el mismo, no se crea otro.
           </p>
         </div>
         {challenge.status === ChallengeStatus.ACTIVE ? (
@@ -64,6 +64,7 @@ export default async function UpdatePage() {
           alreadyUpdated={Boolean(existing)}
           locked={false}
           dayNumber={progress.tradingDayNumber}
+          currentBalance={existing ? existing.balance.toFixed(2) : ""}
         />
       )}
     </div>

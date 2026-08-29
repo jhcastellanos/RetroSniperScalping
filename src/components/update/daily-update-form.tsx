@@ -15,12 +15,14 @@ export function DailyUpdateForm({
   alreadyUpdated,
   locked,
   dayNumber,
+  currentBalance,
 }: {
   challengeId: string;
   canSubmit: boolean;
   alreadyUpdated: boolean;
   locked: boolean;
   dayNumber: number;
+  currentBalance?: string;
 }) {
   const [state, action, pending] = useActionState(saveDailyBalance, initial);
 
@@ -55,6 +57,7 @@ export function DailyUpdateForm({
           min="0"
           label={`Balance de cierre · Día ${dayNumber}`}
           placeholder="127.32"
+          defaultValue={currentBalance}
           required
         />
         <Button type="submit" disabled={pending}>
