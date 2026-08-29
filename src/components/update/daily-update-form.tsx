@@ -47,6 +47,15 @@ export function DailyUpdateForm({
 
   return (
     <div className="space-y-4">
+      {alreadyUpdated ? (
+        <p className="rounded-2xl border border-accent/40 bg-accent/10 p-4 text-sm">
+          Ya hay un resultado para el día {dayNumber}. Si subes un dato nuevo, el sistema <span className="font-semibold text-heading">editará el resultado ya guardado</span> de este mismo día. No se creará un segundo registro.
+        </p>
+      ) : (
+        <p className="rounded-2xl border border-border bg-card p-4 text-sm text-muted">
+          Solo puedes guardar un resultado por día. Si más tarde subes otro dato el mismo día, el sistema editará el resultado que ya enviaste.
+        </p>
+      )}
       <form action={action} className="space-y-4">
         <input type="hidden" name="challengeId" value={challengeId} />
         <Input

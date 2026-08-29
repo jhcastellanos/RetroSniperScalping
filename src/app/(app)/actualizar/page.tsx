@@ -48,7 +48,7 @@ export default async function UpdatePage() {
           <h1 className="text-3xl font-semibold">Actualización diaria</h1>
           <p className="mt-1 text-sm text-muted">
             Introduce el balance de cierre del día {progress.tradingDayNumber}
-            {officialDate ? ` (${formatLongDate(officialDate)})` : ""}. Solo hay un resultado por día: si ya lo guardaste, al enviarlo otra vez se actualiza el mismo, no se crea otro.
+            {officialDate ? ` (${formatLongDate(officialDate)})` : ""}.
           </p>
         </div>
         {challenge.status === ChallengeStatus.ACTIVE ? (
