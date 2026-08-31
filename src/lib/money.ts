@@ -33,7 +33,7 @@ export function formatPercent(value: Prisma.Decimal | string | number): string {
   return amount.isPositive() ? `+${formatted}` : `-${formatted}`;
 }
 
-export function clampPercent(value: Prisma.Decimal, min = 0, max = 100): number {
+export function clampPercent(value: Prisma.Decimal | string | number, min = 0, max = 100): number {
   const n = moneyToNumber(value);
   return Math.min(max, Math.max(min, n));
 }

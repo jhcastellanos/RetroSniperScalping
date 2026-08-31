@@ -6,6 +6,7 @@ import { buildChallengeProgress, getLeaderboard } from "@/lib/challenge";
 import { formatMoney } from "@/lib/money";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { JoinableChallengeCard, WaitingScreen } from "@/components/challenge/waiting-screen";
+import { DayBanner } from "@/components/challenge/day-banner";
 import { Card } from "@/components/ui/card";
 import { isDatabaseConfigured } from "@/lib/env";
 
@@ -47,16 +48,57 @@ export default async function HomePage() {
       ),
     );
 
+    const extras = await Promise.all(
+      joinable.map(async (challenge) => {
+        if (challenge.status !== ChallengeStatus.ACTIVE) {
+          return { rows: [], resultCount: 0, progress: null };
+        }
+
+        const [rows, resultCount] = await Promise.all([
+          getLeaderboard(challenge.id, user.id),
+          prisma.dailyBalance.count({ where: { challengeId: challenge.id } }),
+        ]);
+
+        return {
+          rows,
+          resultCount,
+          progress: buildChallengeProgress(challenge),
+        };
+      }),
+    );
+
     return (
-      <div className="space-y-4">
-        <h1 className="text-3xl font-semibold">Únete al reto</h1>
-        {joinable.map((challenge, index) => (
-          <JoinableChallengeCard
-            key={challenge.id}
-            challenge={challenge}
-            participantCount={counts[index]}
-          />
-        ))}
+      <div className="space-y-8">
+        {joinable.map((challenge, index) => {
+          const extra = extras[index];
+
+          return (
+            <div key={challenge.id} className="space-y-5">
+              {extra.progress ? (
+                <DayBanner
+                  dayNumber={extra.progress.tradingDayNumber}
+                  totalDays={challenge.totalTradingDays}
+                  remaining={extra.progress.tradingDaysRemaining}
+                  officialDate={extra.progress.officialDate}
+                />
+              ) : (
+                <h1 className="text-3xl font-semibold">Únete al reto</h1>
+              )}
+              <JoinableChallengeCard
+                challenge={challenge}
+                participantCount={counts[index]}
+              />
+              {challenge.status === ChallengeStatus.ACTIVE ? (
+                <Leaderboard
+                  rows={extra.rows}
+                  started
+                  participantCount={counts[index]}
+                  hasResults={extra.resultCount > 0}
+                />
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -77,31 +119,18 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
-          {challenge.name}
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold">
-          Día {progress.tradingDayNumber} / {challenge.totalTradingDays}
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          {progress.tradingDaysRemaining} días de trading restantes
-        </p>
-        <p className="mt-3 text-sm text-muted">
-          Inicial {formatMoney(challenge.startingBalance)} · Objetivo {formatMoney(challenge.targetBalance)}
-        </p>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-foreground/8">
-          <div
-            className="h-full rounded-full bg-accent"
-            style={{
-              width: `${Math.min(100, (progress.tradingDaysElapsed / challenge.totalTradingDays) * 100)}%`,
-            }}
-          />
-        </div>
-        <p className="mt-2 text-xs text-muted">
-          {progress.tradingDaysElapsed} / {challenge.totalTradingDays} días de trading
-        </p>
-      </header>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+        {challenge.name}
+      </p>
+      <DayBanner
+        dayNumber={progress.tradingDayNumber}
+        totalDays={challenge.totalTradingDays}
+        remaining={progress.tradingDaysRemaining}
+        officialDate={progress.officialDate}
+      />
+      <p className="text-sm text-muted">
+        Inicial {formatMoney(challenge.startingBalance)} · Objetivo {formatMoney(challenge.targetBalance)}
+      </p>
       <Leaderboard
         rows={rows}
         started={started}
