@@ -10,6 +10,7 @@ import { money } from "@/lib/money";
 import { dateToYmd, ymdToUtcDate } from "@/lib/dates";
 import { dailyReturn, reachedTarget } from "@/lib/stats";
 import { getLeaderboard } from "@/lib/challenge";
+import { syncChallengeDays } from "@/lib/sync-challenge-days";
 
 export type SaveBalanceResult = {
   error?: string;
@@ -49,24 +50,33 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
     });
     if (!challenge) throw new AppError("El reto no existe.", "NOT_FOUND");
 
-    if (challenge.status !== ChallengeStatus.ACTIVE) {
+    if (challenge.status === ChallengeStatus.ACTIVE) {
+      await syncChallengeDays(challenge.id);
+    }
+
+    const current = await prisma.challenge.findUnique({
+      where: { id: parsed.data.challengeId },
+    });
+    if (!current) throw new AppError("El reto no existe.", "NOT_FOUND");
+
+    if (current.status !== ChallengeStatus.ACTIVE) {
       throw new AppError(ErrorMessages.challengeNotStarted, "NOT_STARTED");
     }
-    if (!challenge.actualStartDate || !challenge.currentDayDate || challenge.currentDayNumber < 1) {
+    if (!current.actualStartDate || !current.currentDayDate || current.currentDayNumber < 1) {
       throw new AppError(ErrorMessages.dayNotOpen, "DAY_NOT_OPEN");
     }
-    if (challenge.currentDayNumber > challenge.totalTradingDays) {
-      await maybeCompleteChallenge(challenge.id);
+    if (current.currentDayNumber > current.totalTradingDays) {
+      await maybeCompleteChallenge(current.id);
       throw new AppError(ErrorMessages.challengeCompleted, "COMPLETED");
     }
 
-    const officialDate = dateToYmd(challenge.currentDayDate);
+    const officialDate = dateToYmd(current.currentDayDate);
 
     const participant = await prisma.challengeParticipant.findUnique({
       where: {
         userId_challengeId: {
           userId: user.id,
-          challengeId: challenge.id,
+          challengeId: current.id,
         },
       },
     });
@@ -74,39 +84,39 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
       throw new AppError(ErrorMessages.notRegistered, "NOT_REGISTERED");
     }
 
-    const previousRank = (await getLeaderboard(challenge.id, user.id)).find((row) => row.isYou)?.position ?? null;
+    const previousRank = (await getLeaderboard(current.id, user.id)).find((row) => row.isYou)?.position ?? null;
     const tradingDate = ymdToUtcDate(officialDate);
     const newBalance = money(parsed.data.balance);
 
     const previousEntry = await prisma.dailyBalance.findFirst({
       where: {
         participantId: participant.id,
-        challengeId: challenge.id,
+        challengeId: current.id,
         tradingDate: { lt: tradingDate },
       },
       orderBy: { tradingDate: "desc" },
     });
-    const previousBalance = previousEntry?.balance ?? money(challenge.startingBalance);
+    const previousBalance = previousEntry?.balance ?? money(current.startingBalance);
 
     const result = await prisma.$transaction(async (tx) => {
       const saved = await tx.dailyBalance.upsert({
         where: {
           participantId_challengeId_tradingDate: {
             participantId: participant.id,
-            challengeId: challenge.id,
+            challengeId: current.id,
             tradingDate,
           },
         },
         create: {
           participantId: participant.id,
-          challengeId: challenge.id,
+          challengeId: current.id,
           balance: newBalance,
           tradingDate,
-          dayNumber: challenge.currentDayNumber,
+          dayNumber: current.currentDayNumber,
         },
         update: {
           balance: newBalance,
-          dayNumber: challenge.currentDayNumber,
+          dayNumber: current.currentDayNumber,
         },
       });
 
@@ -114,7 +124,7 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
         !participant.currentBalance || !money(participant.currentBalance).eq(newBalance);
 
       const completedNow =
-        !participant.completedAt && reachedTarget(newBalance, challenge.targetBalance);
+        !participant.completedAt && reachedTarget(newBalance, current.targetBalance);
 
       await tx.challengeParticipant.update({
         where: { id: participant.id },
@@ -131,7 +141,7 @@ export async function saveDailyBalance(_prev: SaveBalanceResult, formData: FormD
       return saved;
     });
 
-    const newRank = (await getLeaderboard(challenge.id, user.id)).find((row) => row.isYou)?.position ?? null;
+    const newRank = (await getLeaderboard(current.id, user.id)).find((row) => row.isYou)?.position ?? null;
 
     revalidatePath("/");
     revalidatePath("/actualizar");

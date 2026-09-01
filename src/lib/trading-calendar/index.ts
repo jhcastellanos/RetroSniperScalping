@@ -93,3 +93,34 @@ export function nyseTradingDayHasEnded(officialDate: Ymd, today: Ymd): boolean {
 export function nextOfficialChallengeDate(closedDate: Ymd): Ymd {
   return nextTradingDay(closedDate);
 }
+
+export type AutoChallengeDayStep =
+  | { action: "stay" }
+  | { action: "complete" }
+  | { action: "advance"; nextDate: Ymd; nextNumber: number };
+
+export function nextAutoChallengeStep(input: {
+  officialDate: Ymd;
+  currentDayNumber: number;
+  totalTradingDays: number;
+  today: Ymd;
+}): AutoChallengeDayStep {
+  if (compareYmd(input.today, input.officialDate) <= 0) {
+    return { action: "stay" };
+  }
+
+  if (input.currentDayNumber >= input.totalTradingDays) {
+    return { action: "complete" };
+  }
+
+  const nextDate = nextOfficialChallengeDate(input.officialDate);
+  if (compareYmd(nextDate, input.today) > 0) {
+    return { action: "stay" };
+  }
+
+  return {
+    action: "advance",
+    nextDate,
+    nextNumber: input.currentDayNumber + 1,
+  };
+}

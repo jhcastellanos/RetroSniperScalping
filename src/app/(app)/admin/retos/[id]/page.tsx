@@ -84,7 +84,7 @@ export default async function ChallengeAdminPage({
             <Stat label="Completaron" value={String(completedCount)} />
             <Stat label="Balance promedio" value={formatMoney(average)} />
             <p className="col-span-2 text-sm text-muted">
-              El día solo cambia cuando tú lo cierras. Un sábado o feriado no cierra el día. Las personas pueden seguir inscribiéndose aunque el reto ya esté en curso.
+              El día avanza solo después de la medianoche en Nueva York, al siguiente día hábil de NYSE. Los fines de semana y feriados no cuentan. Puedes cerrar un día antes de tiempo si hace falta.
             </p>
           </>
         ) : null}
