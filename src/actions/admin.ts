@@ -84,8 +84,8 @@ export async function startChallengeToday(challengeId: string) {
     if (!challenge) throw new AppError("El reto no existe.", "NOT_FOUND");
 
     // plannedStartDate is informational only. Admin can start any calendar day,
-    // including weekends. After midnight in New York the day counter moves to
-    // the next NYSE trading day on its own.
+    // including weekends. A weekend start stays on day 1 until the first NYSE
+    // session ends; then the next trading day becomes day 2.
     if (challenge.status === ChallengeStatus.ACTIVE || challenge.actualStartDate) {
       return {
         success: false,

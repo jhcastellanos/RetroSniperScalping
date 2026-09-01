@@ -84,7 +84,7 @@ export default async function ChallengeAdminPage({
             <Stat label="Completaron" value={String(completedCount)} />
             <Stat label="Balance promedio" value={formatMoney(average)} />
             <p className="col-span-2 text-sm text-muted">
-              El día avanza solo después de la medianoche en Nueva York, al siguiente día hábil de NYSE. Los fines de semana y feriados no cuentan. Puedes cerrar un día antes de tiempo si hace falta.
+              Cada día se cierra solo al terminar la sesión de NYSE (medianoche en Nueva York). Un inicio en fin de semana cuenta como día 1 hasta que cierre el primer día hábil. Los sábados, domingos y feriados no suman un día extra.
             </p>
           </>
         ) : null}

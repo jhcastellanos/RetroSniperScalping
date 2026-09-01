@@ -46,7 +46,7 @@ export function StartChallengeButton({
             </p>
           ) : null}
           <p>
-            Hoy se convertirá en el día 1. A partir de entonces el contador avanza solo: cuando pasa la medianoche en Nueva York, el reto pasa al siguiente día hábil de la bolsa. Fin de semana y feriados no suman un día nuevo.
+            Hoy se convertirá en el día 1. Ese día se cierra solo cuando termina la sesión de bolsa en Nueva York. Si inicias en fin de semana, el día 1 sigue abierto hasta que cierre el primer día hábil; el siguiente día hábil será el día 2.
           </p>
           {error ? <p className="text-negative">{error}</p> : null}
           <div className="grid grid-cols-2 gap-3 pt-2">

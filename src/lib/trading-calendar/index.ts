@@ -94,6 +94,10 @@ export function nextOfficialChallengeDate(closedDate: Ymd): Ymd {
   return nextTradingDay(closedDate);
 }
 
+export function challengeSessionDate(officialDate: Ymd): Ymd {
+  return isTradingDay(officialDate) ? officialDate : nextTradingDay(officialDate);
+}
+
 export type AutoChallengeDayStep =
   | { action: "stay" }
   | { action: "complete" }
@@ -105,7 +109,8 @@ export function nextAutoChallengeStep(input: {
   totalTradingDays: number;
   today: Ymd;
 }): AutoChallengeDayStep {
-  if (compareYmd(input.today, input.officialDate) <= 0) {
+  const sessionDate = challengeSessionDate(input.officialDate);
+  if (compareYmd(input.today, sessionDate) <= 0) {
     return { action: "stay" };
   }
 
@@ -113,7 +118,7 @@ export function nextAutoChallengeStep(input: {
     return { action: "complete" };
   }
 
-  const nextDate = nextOfficialChallengeDate(input.officialDate);
+  const nextDate = nextTradingDay(sessionDate);
   if (compareYmd(nextDate, input.today) > 0) {
     return { action: "stay" };
   }
@@ -123,4 +128,35 @@ export function nextAutoChallengeStep(input: {
     nextDate,
     nextNumber: input.currentDayNumber + 1,
   };
+}
+
+export function deriveChallengeDayState(input: {
+  startDate: Ymd;
+  totalTradingDays: number;
+  today: Ymd;
+}): { status: "active" | "completed"; officialDate: Ymd; dayNumber: number } {
+  let officialDate = input.startDate;
+  let dayNumber = 1;
+
+  for (let step = 0; step < 400; step += 1) {
+    const decision = nextAutoChallengeStep({
+      officialDate,
+      currentDayNumber: dayNumber,
+      totalTradingDays: input.totalTradingDays,
+      today: input.today,
+    });
+
+    if (decision.action === "stay") {
+      return { status: "active", officialDate, dayNumber };
+    }
+
+    if (decision.action === "complete") {
+      return { status: "completed", officialDate, dayNumber };
+    }
+
+    officialDate = decision.nextDate;
+    dayNumber = decision.nextNumber;
+  }
+
+  return { status: "active", officialDate, dayNumber };
 }

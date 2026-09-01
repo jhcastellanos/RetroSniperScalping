@@ -30,15 +30,15 @@ export function CloseDayButton({
     <>
       {tradingDayEnded ? (
         <p className="rounded-2xl border border-accent/40 bg-accent/10 p-4 text-sm">
-          Ya pasó la medianoche de Nueva York para el día {currentDayNumber} ({formatLongDate(officialDate)}). El siguiente día hábil aún no llega; el contador avanzará solo cuando ese día comience. También puedes cerrarlo ahora.
+          La sesión del día {currentDayNumber} ({formatLongDate(officialDate)}) ya terminó. El cierre automático abrirá el siguiente día hábil en cuanto corresponda. También puedes cerrarlo ahora.
         </p>
       ) : officialDateIsTradingDay ? (
         <p className="text-sm text-muted">
-          El día {currentDayNumber} está abierto. Al pasar la medianoche en Nueva York avanzará solo al siguiente día hábil. También puedes cerrarlo ahora si quieres adelantarlo.
+          El día {currentDayNumber} está abierto. Se cierra solo al pasar la medianoche en Nueva York y entonces empieza el siguiente día hábil.
         </p>
       ) : (
         <p className="text-sm text-muted">
-          El día {currentDayNumber} no es hábil de la bolsa (fin de semana o feriado). Sigue abierto hasta el próximo día hábil, o ciérralo ahora para adelantar el contador.
+          El día {currentDayNumber} empezó fuera de un día hábil. Se cierra solo cuando termine el primer día de bolsa (medianoche en Nueva York).
         </p>
       )}
       <Button type="button" variant={tradingDayEnded ? "primary" : "secondary"} onClick={() => setOpen(true)}>
